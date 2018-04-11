@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C686325E-3261-42F7-AEB1-DDE5280E1CEB}</ProjectGuid>
+    <ProjectName>RTOSDemo</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Debug/WIN32.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\Source\WolfSSL;..\..\Source\WolfMQTT;..\..\..\FreeRTOS\Source\include;..\..\..\FreeRTOS\Source\portable\MSVC-MingW;..\..\Source\FreeRTOS-Plus-TCP\include;..\..\Source\FreeRTOS-Plus-TCP\portable\Compiler\MSVC;..\..\Source\FreeRTOS-Plus-TCP\protocols\include;..\..\Source\FreeRTOS-Plus-TCP\portable\BufferManagement;.\WinPCap;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_WIN32_WINNT=0x0500;WINVER=0x400;_CRT_SECURE_NO_WARNINGS;BUILDING_WOLFMQTT;WOLFSSL_USER_SETTINGS;ENABLE_MQTT_TLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\Debug/WIN32.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalOptions>/wd4210 /wd4127 /wd4214 /wd4201 /wd4244  /wd4310 %(AdditionalOptions)</AdditionalOptions>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ExceptionHandling>false</ExceptionHandling>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c09</Culture>
+    </ResourceCompile>
+    <Link>
+      <OutputFile>.\Debug/RTOSDemo.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/WIN32.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>wpcap.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\WinPCap</AdditionalLibraryDirectories>
+      <Profile>false</Profile>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/WIN32.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Release/WIN32.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\..\Source\WolfSSL;..\..\Source\WolfMQTT;..\..\..\FreeRTOS\Source\include;..\..\..\FreeRTOS\Source\portable\MSVC-MingW;..\..\Source\FreeRTOS-Plus-TCP\include;..\..\Source\FreeRTOS-Plus-TCP\portable\Compiler\MSVC;..\..\Source\FreeRTOS-Plus-TCP\protocols\include;..\..\Source\FreeRTOS-Plus-TCP\portable\BufferManagement;.\WinPCap;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_WIN32_WINNT=0x0500;WINVER=0x400;_CRT_SECURE_NO_WARNINGS;BUILDING_WOLFMQTT;WOLFSSL_USER_SETTINGS;ENABLE_MQTT_TLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\Release/WIN32.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c09</Culture>
+    </ResourceCompile>
+    <Link>
+      <OutputFile>.\Release/RTOSDemo.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\Release/WIN32.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>wpcap.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\WinPCap</AdditionalLibraryDirectories>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/WIN32.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\aes.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\arc4.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\asm.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\asn.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\blake2b.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\camellia.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\chacha.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\chacha20_poly1305.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\cmac.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\coding.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\compress.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\curve25519.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\des3.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\dh.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\dsa.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\ecc.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\ecc_fp.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\ed25519.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\error.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\fe_low_mem.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\fe_operations.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\ge_low_mem.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\ge_operations.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\hash.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\hc128.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\hmac.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\integer.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\logging.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\md2.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\md4.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\md5.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\memory.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\misc.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\pkcs12.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\pkcs7.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\poly1305.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\pwdbased.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\rabbit.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\random.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\ripemd.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\rsa.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\sha.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\sha256.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\sha3.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\sha512.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\signature.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\srp.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\tfm.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\wc_encrypt.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\wc_port.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\wolfevent.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\wolfcrypt\src\wolfmath.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\crl.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\internal.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\keys.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\ocsp.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\sniffer.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\ssl.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\tls.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\tls13.c" />
+    <ClCompile Include="..\..\Source\WolfSSL\src\wolfio.c" />
+    <ClCompile Include="..\..\Source\WolfMQTT\src\mqtt_client.c" />
+    <ClCompile Include="..\..\Source\WolfMQTT\src\mqtt_packet.c" />
+    <ClCompile Include="..\..\Source\WolfMQTT\src\mqtt_socket.c" />
+    <ClCompile Include="..\..\Source\WolfMQTT\examples\mqttnet.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\event_groups.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\list.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\portable\MemMang\heap_4.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\portable\MSVC-MingW\port.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\queue.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\tasks.c" />
+    <ClCompile Include="..\..\..\FreeRTOS\Source\timers.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_ARP.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_DHCP.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_DNS.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_IP.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_Sockets.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_Stream_Buffer.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_TCP_IP.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_TCP_WIN.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\FreeRTOS_UDP_IP.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\portable\BufferManagement\BufferAllocation_2.c" />
+    <ClCompile Include="..\..\Source\FreeRTOS-Plus-TCP\portable\NetworkInterface\WinPCap\NetworkInterface.c" />
+    <ClCompile Include="demo_logging.c" />
+    <ClCompile Include="main.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="MqttFreeRTOSTcp.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FreeRTOSConfig.h" />
+    <ClInclude Include="FreeRTOSIPConfig.h" />
+    <ClInclude Include="user_settings.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\event_groups.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\FreeRTOS.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\portable.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\projdefs.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\queue.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\semphr.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\task.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\include\timers.h" />
+    <ClInclude Include="..\..\..\FreeRTOS\Source\portable\MSVC-MingW\portmacro.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOSIPConfigDefaults.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_ARP.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_DHCP.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_DNS.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_IP.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_IP_Private.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_Sockets.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_Stream_Buffer.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_TCP_IP.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_TCP_WIN.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\FreeRTOS_UDP_IP.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\IPTraceMacroDefaults.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\NetworkBufferManagement.h" />
+    <ClInclude Include="..\..\Source\FreeRTOS-Plus-TCP\include\NetworkInterface.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
