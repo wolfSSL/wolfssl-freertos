@@ -1,0 +1,4 @@
+FreeRTOS-AWS/demos/pc/windows/visual_studio/.vs
+*.sdf
+*.opensdf
+*.user

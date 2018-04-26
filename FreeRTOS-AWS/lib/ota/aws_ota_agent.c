@@ -52,8 +52,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* JSON job document parser includes. */
 #include "jsmn.h"
-#include "mbedtls/base64.h"
 
+#ifdef WOLF_AWSTLS
+/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+#else
+#include "mbedtls/base64.h"
+#endif
 
 /* Macro to get the number of elements in a static type. */
 #define NUM_ELEM(x) (sizeof(x)/sizeof(*x))
@@ -686,7 +691,7 @@ static void prvUpdateJobStatus (OTA_FileContext_t *C, char *pcOTA_DynamicTopic, 
 
 	/* If the topic name was built, try to publish the status message to it. Use QOS 1 to assure update. */
 	if (ulRequestTopicLen > 0)
-	{	
+	{
 		eResult = prvPublishMessage (
 			pvPubSubClient,
 			pcOTA_DynamicTopic,
@@ -1375,7 +1380,7 @@ OTA_FileContext_t *prvParseJobDocFromJSON(const char *pacRawMsg, u32 iMsgLen) {
 								xErr = eOTA_JobParseErr_MalformedJobDoc;
 							}
 							else
-							{	
+							{
 								if (C->iFileSize == 0)
 								{
 									OTA_PRINT ("[OTA] Zero file size is not allowed!\r\n");

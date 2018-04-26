@@ -26,6 +26,9 @@
 
 #include <Windows.h>
 #include <wincrypt.h>
+
+#ifndef WOLF_AWSTLS
+
 #include "mbedtls/entropy.h"
 
 /*-----------------------------------------------------------*/
@@ -59,3 +62,5 @@ int mbedtls_hardware_poll( void * data,
 
     return lStatus;
 }
+
+#endif /* WOLF_AWSTLS */

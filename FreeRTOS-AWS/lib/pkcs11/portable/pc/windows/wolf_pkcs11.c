@@ -25,7 +25,7 @@
 
 
 /**
- * @file pkcs11.c
+ * @file wolf_pkcs11.c
  * @brief Windows simulator PKCS#11 implementation for software keys. This
  * file deviates from the FreeRTOS style standard for some function names and
  * data types in order to maintain compliance with the PKCS#11 standard.
@@ -38,16 +38,11 @@
 #include "aws_crypto.h"
 #include "aws_pkcs11.h"
 
-#ifndef WOLF_AWSTLS
+#ifdef WOLF_AWSTLS
 
-/* mbedTLS includes. */
-#include "mbedtls/pk.h"
-#include "mbedtls/pk_internal.h"
-#include "mbedtls/x509_crt.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/base64.h"
+/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+
 #include "aws_clientcredential.h"
 
 /* C runtime includes. */
@@ -70,26 +65,15 @@
 
 #define pkcs11SUPPORTED_KEY_BITS              2048
 
-typedef int ( * pfnMbedTlsSign )( void * ctx,
-                                  mbedtls_md_type_t md_alg,
-                                  const unsigned char * hash,
-                                  size_t hash_len,
-                                  unsigned char * sig,
-                                  size_t * sig_len,
-                                  int ( *f_rng )( void *, unsigned char *, size_t ),
-                                  void * p_rng );
 
 /**
  * @brief Key structure.
  */
 typedef struct P11Key
 {
-    mbedtls_pk_context xMbedPkCtx;
-    mbedtls_x509_crt xMbedX509Cli;
-    mbedtls_pk_info_t xMbedPkInfo;
-    pfnMbedTlsSign pfnSavedMbedSign;
-    void * pvSavedMbedPkCtx;
-} P11Key_t, * P11KeyPtr_t;
+    mbedtls_pk_context xWolfPkCtx;
+    mbedtls_x509_crt xWolfX509Cli;
+} P11Key_t, *P11KeyPtr_t;
 
 /**
  * @brief Session structure.
@@ -102,8 +86,7 @@ typedef struct P11Session
     CK_BBOOL xFindObjectInit;
     CK_BBOOL xFindObjectComplete;
     CK_OBJECT_CLASS xFindObjectClass;
-    mbedtls_ctr_drbg_context xMbedDrbgCtx;
-    mbedtls_entropy_context xMbedEntropyContext;
+    mbedtls_ctr_drbg_context xWolfDrbgCtx;
 } P11Session_t, * P11SessionPtr_t;
 
 /**
@@ -328,32 +311,17 @@ static CK_RV prvInitializeKey( P11SessionPtr_t pxSessionObj,
     if( ( CKR_OK == xResult ) && ( NULL != pcEncodedKey ) )
     {
         memset( pxSessionObj->pxCurrentKey, 0, sizeof( P11Key_t ) );
-        mbedtls_pk_init( &pxSessionObj->pxCurrentKey->xMbedPkCtx );
+        mbedtls_pk_init( &pxSessionObj->pxCurrentKey->xWolfPkCtx );
 
-        if( 0 != mbedtls_pk_parse_key(
-                &pxSessionObj->pxCurrentKey->xMbedPkCtx,
+        xResult = mbedtls_pk_parse_key(
+                &pxSessionObj->pxCurrentKey->xWolfPkCtx,
                 ( const unsigned char * ) pcEncodedKey,
                 ulEncodedKeyLength,
                 NULL,
-                0 ) )
-        {
+                0 );
+
+        if (xResult != 0) {
             xResult = CKR_FUNCTION_FAILED;
-        }
-
-        if( CKR_OK == xResult )
-        {
-            /* Swap out the signing function pointer. */
-            memcpy(
-                &pxSessionObj->pxCurrentKey->xMbedPkInfo,
-                pxSessionObj->pxCurrentKey->xMbedPkCtx.pk_info,
-                sizeof( pxSessionObj->pxCurrentKey->xMbedPkInfo ) );
-            pxSessionObj->pxCurrentKey->pfnSavedMbedSign = pxSessionObj->pxCurrentKey->xMbedPkInfo.sign_func;
-            pxSessionObj->pxCurrentKey->xMbedPkInfo.sign_func = prvPrivateKeySigningCallback;
-            pxSessionObj->pxCurrentKey->xMbedPkCtx.pk_info = &pxSessionObj->pxCurrentKey->xMbedPkInfo;
-
-            /* Swap out the underlying internal key context. */
-            pxSessionObj->pxCurrentKey->pvSavedMbedPkCtx = pxSessionObj->pxCurrentKey->xMbedPkCtx.pk_ctx;
-            pxSessionObj->pxCurrentKey->xMbedPkCtx.pk_ctx = pxSessionObj;
         }
     }
 
@@ -363,19 +331,20 @@ static CK_RV prvInitializeKey( P11SessionPtr_t pxSessionObj,
 
     if( ( CKR_OK == xResult ) && ( NULL != pcEncodedCertificate ) )
     {
-        mbedtls_x509_crt_init( &pxSessionObj->pxCurrentKey->xMbedX509Cli );
+        mbedtls_x509_crt_init( &pxSessionObj->pxCurrentKey->xWolfX509Cli );
 
-        if( 0 != mbedtls_x509_crt_parse(
-                &pxSessionObj->pxCurrentKey->xMbedX509Cli,
+        mbedtls_x509_crt_parse(
+                &pxSessionObj->pxCurrentKey->xWolfX509Cli,
                 ( const unsigned char * ) pcEncodedCertificate,
-                ulEncodedCertificateLength ) )
-        {
+                ulEncodedCertificateLength );
+        if (pxSessionObj->pxCurrentKey->xWolfX509Cli == NULL) {
             xResult = CKR_FUNCTION_FAILED;
         }
     }
 
     return xResult;
 }
+
 
 /*-----------------------------------------------------------*/
 
@@ -425,14 +394,6 @@ static CK_RV prvLoadAndInitializeDefaultCertificateAndKey( P11SessionPtr_t pxSes
                                 ( const char * ) pucCertificateData,
                                 ulCertificateDataLength );
 
-    /* Stir the random pot. */
-    mbedtls_entropy_update_manual( &pxSession->xMbedEntropyContext,
-                                   pucKeyData,
-                                   ulKeyDataLength );
-    mbedtls_entropy_update_manual( &pxSession->xMbedEntropyContext,
-                                   pucCertificateData,
-                                   ulCertificateDataLength );
-
     /* Clean-up. */
     if( ( NULL != pucCertificateData ) && ( pdTRUE == xFreeCertificate ) )
     {
@@ -447,6 +408,7 @@ static CK_RV prvLoadAndInitializeDefaultCertificateAndKey( P11SessionPtr_t pxSes
     return xResult;
 }
 
+
 /*-----------------------------------------------------------*/
 
 /**
@@ -456,12 +418,9 @@ static void prvFreeKey( P11KeyPtr_t pxKey )
 {
     if( NULL != pxKey )
     {
-        /* Restore the internal key context. */
-        pxKey->xMbedPkCtx.pk_ctx = pxKey->pvSavedMbedPkCtx;
-
         /* Clean-up. */
-        mbedtls_pk_free( &pxKey->xMbedPkCtx );
-        mbedtls_x509_crt_free( &pxKey->xMbedX509Cli );
+        mbedtls_pk_free( &pxKey->xWolfPkCtx );
+        mbedtls_x509_crt_free( &pxKey->xWolfX509Cli );
         vPortFree( pxKey );
     }
 }
@@ -648,25 +607,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_OpenSession )( CK_SLOT_ID xSlotID,
 
     if( CKR_OK == xResult )
     {
-        memset( &pxSessionObj->xMbedEntropyContext,
-                0,
-                sizeof( pxSessionObj->xMbedEntropyContext ) );
-
-        mbedtls_entropy_init( &pxSessionObj->xMbedEntropyContext );
-    }
-
-    if( CKR_OK == xResult )
-    {
-        mbedtls_ctr_drbg_init( &pxSessionObj->xMbedDrbgCtx );
-
-        if( 0 != mbedtls_ctr_drbg_seed( &pxSessionObj->xMbedDrbgCtx,
-                                        mbedtls_entropy_func,
-                                        &pxSessionObj->xMbedEntropyContext,
-                                        NULL,
-                                        0 ) )
-        {
-            xResult = CKR_FUNCTION_FAILED;
-        }
+        mbedtls_ctr_drbg_init( &pxSessionObj->xWolfDrbgCtx );
     }
 
     if( CKR_OK == xResult )
@@ -708,7 +649,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_CloseSession )( CK_SESSION_HANDLE xSession )
             prvFreeKey( pxSession->pxCurrentKey );
         }
 
-        mbedtls_ctr_drbg_free( &pxSession->xMbedDrbgCtx );
+        mbedtls_ctr_drbg_free( &pxSession->xWolfDrbgCtx );
         vPortFree( pxSession );
     }
 
@@ -856,7 +797,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
     P11SessionPtr_t pxSession = prvSessionPointerFromHandle( xSession );
     CK_VOID_PTR pvAttr = NULL;
     CK_ULONG ulAttrLength = 0;
-    mbedtls_pk_type_t xMbedPkType;
+    mbedtls_pk_type_t xWolfPkType;
     CK_ULONG xP11KeyType, iAttrib, xKeyBitLen;
 
     ( void ) ( xObject );
@@ -878,9 +819,8 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                 /*
                  * Map the private key type between APIs.
                  */
-                xMbedPkType = mbedtls_pk_get_type( &pxSession->pxCurrentKey->xMbedPkCtx );
-
-                switch( xMbedPkType )
+                xWolfPkType = mbedtls_pk_get_type( &pxSession->pxCurrentKey->xWolfPkCtx );
+                switch( xWolfPkType )
                 {
                     case MBEDTLS_PK_RSA:
                     case MBEDTLS_PK_RSA_ALT:
@@ -911,8 +851,12 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                 /*
                  * Assume that the query is for the encoded client certificate.
                  */
-                pvAttr = ( CK_VOID_PTR ) pxSession->pxCurrentKey->xMbedX509Cli.raw.p; /*lint !e9005 !e9087 Allow casting other types to void*. */
-                ulAttrLength = pxSession->pxCurrentKey->xMbedX509Cli.raw.len;
+            #if 0
+                pvAttr = ( CK_VOID_PTR ) pxSession->pxCurrentKey->xWolfX509Cli.raw.p; /*lint !e9005 !e9087 Allow casting other types to void*. */
+                ulAttrLength = pxSession->pxCurrentKey->xWolfX509Cli.raw.len;
+            #else
+                xResult = CKR_ATTRIBUTE_VALUE_INVALID;
+            #endif
                 break;
 
             case CKA_MODULUS_BITS:
@@ -923,7 +867,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                  * in this port.
                  */
                 xKeyBitLen = mbedtls_pk_get_bitlen(
-                    &pxSession->pxCurrentKey->xMbedPkCtx );
+                    &pxSession->pxCurrentKey->xWolfPkCtx );
                 ulAttrLength = sizeof( xKeyBitLen );
                 pvAttr = &xKeyBitLen;
                 break;
@@ -933,8 +877,12 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                 /*
                  * Return the key context for application-layer use.
                  */
-                ulAttrLength = sizeof( pxSession->pxCurrentKey->xMbedPkCtx );
-                pvAttr = &pxSession->pxCurrentKey->xMbedPkCtx;
+            #if 0
+                ulAttrLength = sizeof( pxSession->pxCurrentKey->xWolfPkCtx );
+                pvAttr = &pxSession->pxCurrentKey->xWolfPkCtx;
+            #else
+                xResult = CKR_ATTRIBUTE_VALUE_INVALID;
+            #endif
                 break;
 
             default:
@@ -1151,22 +1099,31 @@ CK_DEFINE_FUNCTION( CK_RV, C_Sign )( CK_SESSION_HANDLE xSession,
         /*
          * Sign the data.
          */
-
+#if 0
         if( CKR_OK == xResult )
         {
-            if( 0 != pxSessionObj->pxCurrentKey->pfnSavedMbedSign(
-                    pxSessionObj->pxCurrentKey->pvSavedMbedPkCtx,
+            if( 0 != pxSessionObj->pxCurrentKey->pfnSavedWolfSign(
+                    pxSessionObj->pxCurrentKey->pvSavedWolfPkCtx,
                     MBEDTLS_MD_SHA256,
                     pucData,
                     ulDataLen,
                     pucSignature,
                     ( size_t * ) pulSignatureLen,
                     mbedtls_ctr_drbg_random,
-                    &pxSessionObj->xMbedDrbgCtx ) )
+                    &pxSessionObj->xWolfDrbgCtx ) )
             {
                 xResult = CKR_FUNCTION_FAILED;
             }
         }
+#else
+        (void)pxSessionObj;
+        (void)pucData;
+        (void)ulDataLen;
+        (void)pucSignature;
+        (void)pulSignatureLen;
+
+        xResult = CKR_FUNCTION_FAILED;
+#endif
     }
 
     return xResult;
@@ -1199,9 +1156,10 @@ CK_DEFINE_FUNCTION( CK_RV, C_Verify )( CK_SESSION_HANDLE xSession,
     CK_RV xResult = CKR_OK;
     P11SessionPtr_t pxSessionObj = prvSessionPointerFromHandle( xSession );
 
+#if 0
     /* Verify the signature. */
-    if( 0 != pxSessionObj->pxCurrentKey->xMbedPkInfo.verify_func(
-        pxSessionObj->pxCurrentKey->pvSavedMbedPkCtx,
+    if( 0 != pxSessionObj->pxCurrentKey->xWolfPkInfo.verify_func(
+        pxSessionObj->pxCurrentKey->pvSavedWolfPkCtx,
         MBEDTLS_MD_SHA256,
         pucData,
         ulDataLen,
@@ -1210,6 +1168,14 @@ CK_DEFINE_FUNCTION( CK_RV, C_Verify )( CK_SESSION_HANDLE xSession,
     {
         xResult = CKR_SIGNATURE_INVALID;
     }
+#else
+    (void)pxSessionObj;
+        (void)pucData;
+        (void)ulDataLen;
+        (void)pucSignature;
+        (void)ulSignatureLen;
+    xResult = CKR_SIGNATURE_INVALID;
+#endif
 
     /* Return the signature verification result. */
     return xResult;
@@ -1224,7 +1190,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_GenerateRandom )( CK_SESSION_HANDLE xSession,
 {   /*lint !e9072 It's OK to have different parameter name. */
     P11SessionPtr_t pxSessionObj = prvSessionPointerFromHandle( xSession );
 
-    if( 0 != mbedtls_ctr_drbg_random( &pxSessionObj->xMbedDrbgCtx, pucRandomData, ulRandomLen ) )
+    if( 0 != mbedtls_ctr_drbg_random( &pxSessionObj->xWolfDrbgCtx, pucRandomData, ulRandomLen ) )
     {
         return CKR_FUNCTION_FAILED;
     }
@@ -1232,4 +1198,4 @@ CK_DEFINE_FUNCTION( CK_RV, C_GenerateRandom )( CK_SESSION_HANDLE xSession,
     return CKR_OK;
 }
 
-#endif /* !#ifndef WOLF_AWSTLS */
+#endif /* WOLF_AWSTLS */

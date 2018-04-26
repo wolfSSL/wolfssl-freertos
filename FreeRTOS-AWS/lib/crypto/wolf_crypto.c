@@ -29,15 +29,11 @@
 #include "FreeRTOSIPConfig.h"
 #include "aws_crypto.h"
 
-#ifndef WOLF_AWSTLS
+#ifdef WOLF_AWSTLS
 
-/* mbedTLS includes. */
-#include "mbedtls/config.h"
-#include "mbedtls/platform.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/sha1.h"
-#include "mbedtls/pk.h"
-#include "mbedtls/x509_crt.h"
+/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+
 
 /* C runtime includes. */
 #include <string.h>
@@ -49,8 +45,8 @@ typedef struct SignatureVerificationState
 {
     BaseType_t xAsymmetricAlgorithm;
     BaseType_t xHashAlgorithm;
-    mbedtls_sha1_context xSHA1Context;
-    mbedtls_sha256_context xSHA256Context;
+    wc_Sha     xSHA1Context;
+    wc_Sha256  xSHA256Context;
 } SignatureVerificationState_t, * SignatureVerificationStatePtr_t;
 
 /*
@@ -82,48 +78,89 @@ static BaseType_t prvVerifySignature( char * pcSignerCertificate,
                                       BaseType_t xHashAlgorithm,
                                       uint8_t * pucHash,
                                       size_t xHashLength,
+                                      BaseType_t xAsymmetricAlgorithm,
                                       uint8_t * pucSignature,
                                       size_t xSignatureLength )
 {
     BaseType_t xResult = pdTRUE;
-    mbedtls_x509_crt xCertCtx;
-    mbedtls_md_type_t xMbedHashAlg = MBEDTLS_MD_SHA256;
-
-
-    memset( &xCertCtx, 0, sizeof( mbedtls_x509_crt ) );
+    int buf_format = WOLFSSL_FILETYPE_ASN1;
+    uint8_t* pucSignerCertDer = (uint8_t*)pcSignerCertificate;
+    size_t xSignerCertDerLength = xSignerCertificateLength;
+    WOLFSSL_X509* xCertCtx = NULL;
+    WOLFSSL_EVP_PKEY* xPublicKey = NULL;
+    int hashAlg = NID_sha256;
 
     /*
      * Map the hash algorithm
      */
-    if( cryptoHASH_ALGORITHM_SHA1 == xHashAlgorithm )
-    {
-        xMbedHashAlg = MBEDTLS_MD_SHA1;
+    if (xHashAlgorithm == cryptoHASH_ALGORITHM_SHA1) {
+        hashAlg = NID_sha1;
     }
+
+#ifdef WOLFSSL_PEM_TO_DER
+    /* Determine certificate format */
+    if( xSignerCertificateLength != 0 &&
+        pcSignerCertificate[xSignerCertificateLength - 1] == '\0' &&
+        strstr( (const char *) pcSignerCertificate, "-----BEGIN CERTIFICATE-----" ) != NULL )
+    {
+        buf_format = WOLFSSL_FILETYPE_PEM;
+
+        pucSignerCertDer = (uint8_t*)pvPortMalloc(xSignerCertificateLength);
+        if (pucSignerCertDer) {
+            xResult = wolfSSL_CertPemToDer(
+                (const unsigned char*)pcSignerCertificate,
+                xSignerCertificateLength, pucSignerCertDer,
+                xSignerCertificateLength, CERT_TYPE);
+            if (xResult > 0) {
+                xSignerCertDerLength = xResult;
+                xResult = pdTRUE;
+            }
+            else {
+                xResult = pdFALSE;
+            }
+        }
+        else {
+            xResult = pdFALSE;
+        }
+    }
+#endif
 
     /*
      * Decode and create a certificate context
      */
-    mbedtls_x509_crt_init( &xCertCtx );
+    if (xResult == pdTRUE) {
+        xCertCtx = wolfSSL_X509_load_certificate_buffer(
+            (const unsigned char*)pucSignerCertDer, xSignerCertDerLength,
+            WOLFSSL_FILETYPE_ASN1);
+        if (xCertCtx == NULL) {
+            xResult = pdFALSE;
+        }
+    }
 
-    if( 0 != mbedtls_x509_crt_parse(
-            &xCertCtx, ( const unsigned char * ) pcSignerCertificate, xSignerCertificateLength ) )
-    {
-        xResult = pdFALSE;
+    if (xResult == pdTRUE) {
+        xPublicKey = wolfSSL_X509_get_pubkey(xCertCtx);
+        if (xPublicKey == NULL) {
+            xResult = pdFALSE;
+        }
     }
 
     /*
      * Verify the signature using the public key from the decoded certificate
      */
-    if( pdTRUE == xResult )
-    {
-        if( 0 != mbedtls_pk_verify(
-                &xCertCtx.pk,
-                xMbedHashAlg,
-                pucHash,
-                xHashLength,
-                pucSignature,
-                xSignatureLength ) )
-        {
+    if (xResult == pdTRUE) {
+        if (xAsymmetricAlgorithm == cryptoASYMMETRIC_ALGORITHM_RSA) {
+            /* default to failure */
+            xResult = pdFALSE;
+
+            /* Perform verification of signature using provided RSA key */
+            xResult = wolfSSL_RSA_verify(hashAlg, pucHash, xHashLength,
+              pucSignature, xSignatureLength, xPublicKey->rsa);
+            if (xResult == WOLFSSL_SUCCESS) {
+                xResult = pdTRUE;
+            }
+        }
+        else {
+            /* not supported */
             xResult = pdFALSE;
         }
     }
@@ -131,7 +168,18 @@ static BaseType_t prvVerifySignature( char * pcSignerCertificate,
     /*
      * Clean-up
      */
-    mbedtls_x509_crt_free( &xCertCtx );
+    if (xCertCtx) {
+        wolfSSL_X509_free(xCertCtx);
+    }
+    if (xPublicKey) {
+        wolfSSL_EVP_PKEY_free(xPublicKey);
+    }
+
+#ifdef WOLFSSL_PEM_TO_DER
+    if (buf_format == WOLFSSL_FILETYPE_PEM) {
+        vPortFree(pucSignerCertDer);
+    }
+#endif
 
     return xResult;
 }
@@ -145,10 +193,8 @@ static BaseType_t prvVerifySignature( char * pcSignerCertificate,
  */
 void CRYPTO_ConfigureHeap( void )
 {
-    /*
-     * Ensure that the FreeRTOS heap is used
-     */
-    mbedtls_platform_set_calloc_free( prvCalloc, vPortFree ); /*lint !e534 This function always return 0. */
+    /* mapped in user_settings.h with FREERTOS define. */
+
 }
 
 /**
@@ -185,13 +231,11 @@ BaseType_t CRYPTO_SignatureVerificationStart( void ** ppvContext,
          */
         if( cryptoHASH_ALGORITHM_SHA1 == pxCtx->xHashAlgorithm )
         {
-            mbedtls_sha1_init( &pxCtx->xSHA1Context );
-            mbedtls_sha1_starts( &pxCtx->xSHA1Context );
+            wc_InitSha(&pxCtx->xSHA1Context);
         }
         else
         {
-            mbedtls_sha256_init( &pxCtx->xSHA256Context );
-            mbedtls_sha256_starts( &pxCtx->xSHA256Context, 0 );
+            wc_InitSha256(&pxCtx->xSHA256Context);
         }
     }
 
@@ -213,11 +257,11 @@ void CRYPTO_SignatureVerificationUpdate( void * pvContext,
      */
     if( cryptoHASH_ALGORITHM_SHA1 == pxCtx->xHashAlgorithm )
     {
-        mbedtls_sha1_update( &pxCtx->xSHA1Context, pucData, xDataLength );
+        wc_ShaUpdate(&pxCtx->xSHA1Context, pucData, xDataLength);
     }
     else
     {
-        mbedtls_sha256_update( &pxCtx->xSHA256Context, pucData, xDataLength );
+        wc_Sha256Update(&pxCtx->xSHA256Context, pucData, xDataLength);
     }
 }
 
@@ -243,13 +287,13 @@ BaseType_t CRYPTO_SignatureVerificationFinal( void * pvContext,
      */
     if( cryptoHASH_ALGORITHM_SHA1 == pxCtx->xHashAlgorithm )
     {
-        mbedtls_sha1_finish( &pxCtx->xSHA1Context, ucSHA1 );
+        wc_ShaFinal(&pxCtx->xSHA1Context, ucSHA1);
         pucHash = ucSHA1;
         xHashLength = cryptoSHA1_DIGEST_BYTES;
     }
     else
     {
-        mbedtls_sha256_finish( &pxCtx->xSHA256Context, ucSHA256 );
+        wc_Sha256Final(&pxCtx->xSHA256Context, ucSHA256);
         pucHash = ucSHA256;
         xHashLength = cryptoSHA256_DIGEST_BYTES;
     }
@@ -262,6 +306,7 @@ BaseType_t CRYPTO_SignatureVerificationFinal( void * pvContext,
                                   pxCtx->xHashAlgorithm,
                                   pucHash,
                                   xHashLength,
+                                  pxCtx->xAsymmetricAlgorithm,
                                   pucSignature,
                                   xSignatureLength );
 
@@ -273,4 +318,4 @@ BaseType_t CRYPTO_SignatureVerificationFinal( void * pvContext,
     return xResult;
 }
 
-#endif /* !WOLF_AWSTLS */
+#endif /* WOLF_AWSTLS */
