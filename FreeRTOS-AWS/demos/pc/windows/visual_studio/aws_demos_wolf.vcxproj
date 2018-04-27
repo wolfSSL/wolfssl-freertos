@@ -173,7 +173,6 @@
     <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wc_port.c" />
     <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wolfevent.c" />
     <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wolfmath.c" />
-    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\port\arm\mbedtls.c" />
     <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\crl.c" />
     <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\internal.c" />
     <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\keys.c" />

@@ -54,8 +54,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "jsmn.h"
 
 #ifdef WOLF_AWSTLS
-/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
-#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+/* wolfSSL library (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/coding.h>
 #else
 #include "mbedtls/base64.h"
 #endif
@@ -1336,8 +1337,14 @@ OTA_FileContext_t *prvParseJobDocFromJSON(const char *pacRawMsg, u32 iMsgLen) {
 												{
 													size_t xActualLen;
 													ulTokenLen = pxValTok->end - pxValTok->start;
-													if (mbedtls_base64_decode (*(u8**)ulValueDest, kOTA_MaxSignatureSize, &xActualLen,
+												#ifdef WOLF_AWSTLS
+													xActualLen = kOTA_MaxSignatureSize;
+													if (Base64_Decode((const u8*)&pacRawMsg[pxValTok->start], ulTokenLen,
+													 	*(u8**)ulValueDest, &xActualLen) != 0)
+												#else
+											        if (mbedtls_base64_decode (*(u8**)ulValueDest, kOTA_MaxSignatureSize, &xActualLen,
 														(const u8*)&pacRawMsg[pxValTok->start], ulTokenLen) != 0)
+												#endif
 													{	/* Stop processing on error. */
 														OTA_PRINT ("[OTA] mbedtls_base64_decode failed.\r\n");
 														xErr = eOTA_JobParseErr_Base64Decode;

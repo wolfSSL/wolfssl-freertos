@@ -40,8 +40,17 @@
 
 #ifdef WOLF_AWSTLS
 
-/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
-#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+/* wolfSSL library (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/wolfcrypt/sha256.h>
+#include <wolfssl/wolfcrypt/sha.h>
+#include <wolfssl/wolfcrypt/asn_public.h>
+#include <wolfssl/wolfcrypt/coding.h>
+#include <wolfssl/wolfcrypt/random.h>
+#include <wolfssl/wolfcrypt/ecc.h>
+#include <wolfssl/wolfcrypt/rsa.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
 
 #include "aws_clientcredential.h"
 
@@ -65,15 +74,313 @@
 
 #define pkcs11SUPPORTED_KEY_BITS              2048
 
+#define DER_TMP_BUFFER_LEN 2048
+
+typedef enum {
+    WOLFSSL_PK_NONE = 0,
+    WOLFSSL_PK_RSA,
+    WOLFSSL_PK_RSASSA_PSS,
+    WOLFSSL_PK_ECKEY,
+    WOLFSSL_PK_ECKEY_DH,
+    WOLFSSL_PK_ECDSA,
+} wolfSSL_pk_type_t;
+
+typedef struct wolfSSL_pk_context {
+    union {
+    #ifndef NO_RSA
+        RsaKey rsa;
+    #endif
+    #ifdef HAVE_ECC
+        ecc_key  ecc;
+    #endif
+        void* ptr;
+    } key;
+    int type;  /* wolfSSL_pk_type_t */
+    int keyBits;
+} wolfSSL_pk_context;
+
+
+void wolfSSL_pk_init( wolfSSL_pk_context *pk )
+{
+    if (pk) {
+        XMEMSET(pk, 0, sizeof(*pk));
+    }
+}
+
+wolfSSL_pk_type_t wolfSSL_pk_get_type( const wolfSSL_pk_context *pk )
+{
+    if (pk)
+        return pk->type;
+    return WOLFSSL_PK_NONE;
+}
+
+size_t wolfSSL_pk_get_bitlen( const wolfSSL_pk_context *pk )
+{
+    if (pk)
+        return pk->keyBits;
+    return 0;
+}
+
+void wolfSSL_pk_key_free( wolfSSL_pk_context *pk )
+{
+    /* cleanup keys */
+    switch (pk->type) {
+        case WOLFSSL_PK_RSA:
+        case WOLFSSL_PK_RSASSA_PSS:
+    #ifndef NO_RSA
+            wc_FreeRsaKey(&pk->key.rsa);
+    #endif
+            break;
+        case WOLFSSL_PK_ECKEY:
+        case WOLFSSL_PK_ECKEY_DH:
+        case WOLFSSL_PK_ECDSA:
+    #ifdef HAVE_ECC
+            wc_ecc_free(&pk->key.ecc);
+    #endif
+            break;
+
+    }
+}
+
+int wolfSSL_pk_create_key(wolfSSL_pk_context *pk,
+                  const unsigned char *der, size_t derlen)
+{
+    int ret = -1;
+	word32 idx = 0;
+
+    switch (pk->type) {
+        case WOLFSSL_PK_RSA:
+        case WOLFSSL_PK_RSASSA_PSS:
+        #ifndef NO_RSA
+            ret = wc_InitRsaKey(&pk->key.rsa, NULL);
+            if (ret == 0) {
+                ret = wc_RsaPrivateKeyDecode(der, &idx, &pk->key.rsa, derlen);
+                if (ret == 0) {
+                    /* get key size */
+                    ret = wc_RsaEncryptSize(&pk->key.rsa);
+                    if (ret > 0) {
+                        pk->keyBits = ret * 8;
+                        ret = 0;
+                    }
+                    else {
+                        ret = -1;
+                    }
+                }
+                else {
+                    wolfSSL_pk_key_free(pk);
+                }
+            }
+        #endif
+            break;
+        case WOLFSSL_PK_ECKEY:
+        case WOLFSSL_PK_ECKEY_DH:
+        case WOLFSSL_PK_ECDSA:
+        #ifdef HAVE_ECC
+            ret = wc_ecc_init(&pk->key.ecc);
+            if (ret == 0) {
+                ret = wc_EccPrivateKeyDecode(der, &idx, &pk->key.ecc, derlen);
+                if (ret == 0) {
+                    /* get key size */
+                    ret = wc_ecc_size(&pk->key.ecc);
+                    if (ret > 0) {
+                        pk->keyBits = ret * 8;
+                        ret = 0;
+                    }
+                    else {
+                        ret = -1;
+                    }
+                }
+                else {
+                    wolfSSL_pk_key_free(pk);
+                }
+            }
+        #endif
+            break;
+    }
+    return ret;
+}
+
+int wolfSSL_pk_parse_key( wolfSSL_pk_context *pk,
+                  const unsigned char *key, size_t keylen,
+                  const unsigned char *pwd, size_t pwdlen )
+{
+    int ret, derLen;
+    byte derTmp[DER_TMP_BUFFER_LEN];
+    byte* der = derTmp;
+
+    (void)pwdlen;
+
+    if (pk == NULL || key == NULL || keylen <= 0)
+        return -1;
+
+    /* convert PEM to der */
+    ret = wc_KeyPemToDer(key, keylen, der, sizeof(derTmp), (const char*)pwd);
+    if (ret <= 0) {
+        /* try using it directly */
+        der = (byte*)key;
+        derLen = keylen;
+    }
+    else {
+        derLen = ret;
+    }
+
+    /* try RSA */
+    pk->type = WOLFSSL_PK_RSA;
+    ret = wolfSSL_pk_create_key(pk, der, derLen);
+    if (ret != 0) {
+        /* try ECC */
+        pk->type = WOLFSSL_PK_ECDSA;
+        ret = wolfSSL_pk_create_key(pk, der, derLen);
+    }
+
+    return ret;
+}
+
+int wolfSSL_pk_sign(wolfSSL_pk_context *pk,
+                    int hashType, int mgf,
+                    const unsigned char * pucHash,
+                    unsigned int uiHashLen,
+                    unsigned char * pucSig,
+                    size_t * pxSigLen,
+                    WC_RNG* pRng)
+{
+    int ret = -1;
+
+    switch (pk->type) {
+    #ifndef NO_RSA
+        case WOLFSSL_PK_RSA:
+        #ifdef WC_RSA_PSS
+        case WOLFSSL_PK_RSASSA_PSS:
+        #endif
+        {
+            if (pk->type == WOLFSSL_PK_RSA)
+                ret = wc_RsaSSL_Sign(pucHash, uiHashLen, pucSig, *pxSigLen,
+                    &pk->key.rsa, pRng);
+        #ifdef WC_RSA_PSS
+            else
+                ret = wc_RsaPSS_Sign(pucHash, uiHashLen, pucSig, *pxSigLen,
+                    (enum wc_HashType)hashType, mgf, &pk->key.rsa, pRng);
+        #endif
+            if (ret > 0) {
+                *pxSigLen = ret;
+                ret = 0;
+            }
+            else {
+                ret = CKR_SIGNATURE_LEN_RANGE;
+            }
+            break;
+        }
+    #endif /* !NO_RSA */
+    #ifdef HAVE_ECC
+        case WOLFSSL_PK_ECKEY:
+        case WOLFSSL_PK_ECKEY_DH:
+        case WOLFSSL_PK_ECDSA:
+            ret = wc_ecc_sign_hash(pucHash, uiHashLen, pucSig, pxSigLen, pRng, &pk->key.ecc);
+            break;
+    #endif /* HAVE_ECC */
+        default:
+            break;
+    }
+
+    (void)pk;
+    (void)hashType;
+    (void)pucHash;
+    (void)uiHashLen;
+    (void)pucSig;
+    (void)pxSigLen;
+    (void)pRng;
+
+    return ret;
+}
+
+int wolfSSL_pk_verify(wolfSSL_pk_context *pk,
+                      int hashType, int mgf,
+                      const unsigned char * pucHash,
+                      unsigned int uiHashLen,
+                      const unsigned char * pucSig,
+                      size_t ulSigLen)
+{
+    int ret = -1;
+
+    switch (pk->type) {
+    #ifndef NO_RSA
+        case WOLFSSL_PK_RSA:
+        #ifdef WC_RSA_PSS
+        case WOLFSSL_PK_RSASSA_PSS:
+        #endif
+        {
+            byte* plain = pvPortMalloc(ulSigLen);
+            if (plain == NULL)
+                return CKR_HOST_MEMORY;
+
+            if (pk->type == WOLFSSL_PK_RSA)
+                ret = wc_RsaSSL_Verify(pucHash, uiHashLen, plain, ulSigLen,
+                    &pk->key.rsa);
+        #ifdef WC_RSA_PSS
+            else
+                ret = wc_RsaPSS_Verify((byte*)pucHash, uiHashLen, plain, ulSigLen,
+                    (enum wc_HashType)hashType, mgf, &pk->key.rsa);
+        #endif
+            if ((int)ulSigLen == ret &&
+                XMEMCMP(pucSig, plain, ret) == 0) {
+                ret = CKR_OK;
+            }
+            else {
+                ret = CKR_SIGNATURE_INVALID;
+            }
+            vPortFree(plain);
+            break;
+        }
+    #endif /* !NO_RSA */
+    #ifdef HAVE_ECC
+        case WOLFSSL_PK_ECKEY:
+        case WOLFSSL_PK_ECKEY_DH:
+        case WOLFSSL_PK_ECDSA:
+        {
+            int verify = 0;
+            ret = wc_ecc_verify_hash(pucSig, ulSigLen, pucHash, uiHashLen,
+                &verify, &pk->key.ecc);
+            if (ret == 0 && verify == 1) {
+                ret = CKR_OK;
+            }
+            else {
+                ret = CKR_SIGNATURE_INVALID;
+            }
+            break;
+        }
+    #endif /* HAVE_ECC */
+        default:
+            break;
+    }
+
+    (void)pk;
+    (void)hashType;
+    (void)pucHash;
+    (void)uiHashLen;
+    (void)pucSig;
+    (void)ulSigLen;
+
+    return ret;
+}
+
+
+void wolfSSL_pk_free( wolfSSL_pk_context *pk )
+{
+    /* cleanup keys */
+    wolfSSL_pk_key_free(pk);
+}
+
+
 
 /**
  * @brief Key structure.
  */
 typedef struct P11Key
 {
-    mbedtls_pk_context xWolfPkCtx;
-    mbedtls_x509_crt xWolfX509Cli;
+    wolfSSL_pk_context xWolfPkCtx;
+    WOLFSSL_X509* xWolfX509Cli;
 } P11Key_t, *P11KeyPtr_t;
+
 
 /**
  * @brief Session structure.
@@ -86,8 +393,9 @@ typedef struct P11Session
     CK_BBOOL xFindObjectInit;
     CK_BBOOL xFindObjectComplete;
     CK_OBJECT_CLASS xFindObjectClass;
-    mbedtls_ctr_drbg_context xWolfDrbgCtx;
+    WC_RNG   xWolfDrbgCtx;
 } P11Session_t, * P11SessionPtr_t;
+
 
 /**
  * @brief Helper definitions.
@@ -226,61 +534,6 @@ static BaseType_t prvReadFile( char * pcFileName,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Sign a cryptographic hash with the private key.
- *
- * @param[in] pvContext Crypto context.
- * @param[in] xMdAlg Unused.
- * @param[in] pucHash Length in bytes of hash to be signed.
- * @param[in] uiHashLen Byte array of hash to be signed.
- * @param[out] pucSig RSA signature bytes.
- * @param[in] pxSigLen Length in bytes of signature buffer.
- * @param[in] piRng Unused.
- * @param[in] pvRng Unused.
- *
- * @return Zero on success.
- */
-static int prvPrivateKeySigningCallback( void * pvContext,
-                                         mbedtls_md_type_t xMdAlg,
-                                         const unsigned char * pucHash,
-                                         unsigned int uiHashLen,
-                                         unsigned char * pucSig,
-                                         size_t * pxSigLen,
-                                         int ( *piRng )( void *, unsigned char *, size_t ), /*lint !e955 This parameter is unused. */
-                                         void * pvRng )
-{
-    BaseType_t xResult = 0;
-    P11SessionPtr_t pxSession = ( P11SessionPtr_t ) pvContext;
-    CK_MECHANISM xMech = { 0 };
-
-    /* Unreferenced parameters. */
-    ( void ) ( piRng );
-    ( void ) ( pvRng );
-    ( void ) ( xMdAlg );
-
-    /* Use the PKCS#11 module to sign. */
-    xMech.mechanism = CKM_SHA256;
-
-    xResult = ( BaseType_t ) C_SignInit(
-        ( CK_SESSION_HANDLE ) pxSession,
-        &xMech,
-        ( CK_OBJECT_HANDLE ) pxSession->pxCurrentKey );
-
-    if( 0 == xResult )
-    {
-        xResult = ( BaseType_t ) C_Sign(
-            ( CK_SESSION_HANDLE ) pxSession,
-            ( CK_BYTE_PTR ) pucHash, /*lint !e9005 The interfaces are from 3rdparty libraries, we are not suppose to change them. */
-            uiHashLen,
-            pucSig,
-            ( CK_ULONG_PTR ) pxSigLen );
-    }
-
-    return xResult;
-}
-
-/*-----------------------------------------------------------*/
-
-/**
  * @brief Initializes a key structure.
  */
 static CK_RV prvInitializeKey( P11SessionPtr_t pxSessionObj,
@@ -311,9 +564,9 @@ static CK_RV prvInitializeKey( P11SessionPtr_t pxSessionObj,
     if( ( CKR_OK == xResult ) && ( NULL != pcEncodedKey ) )
     {
         memset( pxSessionObj->pxCurrentKey, 0, sizeof( P11Key_t ) );
-        mbedtls_pk_init( &pxSessionObj->pxCurrentKey->xWolfPkCtx );
+        wolfSSL_pk_init( &pxSessionObj->pxCurrentKey->xWolfPkCtx );
 
-        xResult = mbedtls_pk_parse_key(
+        xResult = wolfSSL_pk_parse_key(
                 &pxSessionObj->pxCurrentKey->xWolfPkCtx,
                 ( const unsigned char * ) pcEncodedKey,
                 ulEncodedKeyLength,
@@ -331,12 +584,12 @@ static CK_RV prvInitializeKey( P11SessionPtr_t pxSessionObj,
 
     if( ( CKR_OK == xResult ) && ( NULL != pcEncodedCertificate ) )
     {
-        mbedtls_x509_crt_init( &pxSessionObj->pxCurrentKey->xWolfX509Cli );
 
-        mbedtls_x509_crt_parse(
-                &pxSessionObj->pxCurrentKey->xWolfX509Cli,
-                ( const unsigned char * ) pcEncodedCertificate,
-                ulEncodedCertificateLength );
+        pxSessionObj->pxCurrentKey->xWolfX509Cli =
+            wolfSSL_X509_load_certificate_buffer(
+                (const unsigned char *)pcEncodedCertificate,
+                ulEncodedCertificateLength,
+                WOLFSSL_FILETYPE_PEM);
         if (pxSessionObj->pxCurrentKey->xWolfX509Cli == NULL) {
             xResult = CKR_FUNCTION_FAILED;
         }
@@ -374,6 +627,10 @@ static CK_RV prvLoadAndInitializeDefaultCertificateAndKey( P11SessionPtr_t pxSes
         xFreeCertificate = pdTRUE;
     }
 
+    /* handle cert including null term */
+    if (pucCertificateData[ulCertificateDataLength-1] == '\0')
+        ulCertificateDataLength--;
+
     /* Read the private key from storage. */
     if( pdFALSE == prvReadFile( pkcs11FILE_NAME_KEY,
                                 &pucKeyData,
@@ -386,6 +643,10 @@ static CK_RV prvLoadAndInitializeDefaultCertificateAndKey( P11SessionPtr_t pxSes
     {
         xFreeKey = pdTRUE;
     }
+
+    /* handle key including null term */
+    if (pucKeyData[ulKeyDataLength-1] == '\0')
+        ulKeyDataLength--;
 
     /* Attach the certificate and key to the session. */
     xResult = prvInitializeKey( pxSession,
@@ -419,8 +680,8 @@ static void prvFreeKey( P11KeyPtr_t pxKey )
     if( NULL != pxKey )
     {
         /* Clean-up. */
-        mbedtls_pk_free( &pxKey->xWolfPkCtx );
-        mbedtls_x509_crt_free( &pxKey->xWolfX509Cli );
+        wolfSSL_pk_free( &pxKey->xWolfPkCtx );
+        wolfSSL_X509_free(pxKey->xWolfX509Cli);
         vPortFree( pxKey );
     }
 }
@@ -607,7 +868,9 @@ CK_DEFINE_FUNCTION( CK_RV, C_OpenSession )( CK_SLOT_ID xSlotID,
 
     if( CKR_OK == xResult )
     {
-        mbedtls_ctr_drbg_init( &pxSessionObj->xWolfDrbgCtx );
+        xResult = wc_InitRng( &pxSessionObj->xWolfDrbgCtx );
+        if (xResult != 0)
+            xResult = CKR_RANDOM_NO_RNG;
     }
 
     if( CKR_OK == xResult )
@@ -649,7 +912,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_CloseSession )( CK_SESSION_HANDLE xSession )
             prvFreeKey( pxSession->pxCurrentKey );
         }
 
-        mbedtls_ctr_drbg_free( &pxSession->xWolfDrbgCtx );
+        wc_FreeRng( &pxSession->xWolfDrbgCtx );
         vPortFree( pxSession );
     }
 
@@ -797,7 +1060,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
     P11SessionPtr_t pxSession = prvSessionPointerFromHandle( xSession );
     CK_VOID_PTR pvAttr = NULL;
     CK_ULONG ulAttrLength = 0;
-    mbedtls_pk_type_t xWolfPkType;
+    wolfSSL_pk_type_t xWolfPkType;
     CK_ULONG xP11KeyType, iAttrib, xKeyBitLen;
 
     ( void ) ( xObject );
@@ -819,21 +1082,20 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                 /*
                  * Map the private key type between APIs.
                  */
-                xWolfPkType = mbedtls_pk_get_type( &pxSession->pxCurrentKey->xWolfPkCtx );
+                xWolfPkType = wolfSSL_pk_get_type( &pxSession->pxCurrentKey->xWolfPkCtx );
                 switch( xWolfPkType )
                 {
-                    case MBEDTLS_PK_RSA:
-                    case MBEDTLS_PK_RSA_ALT:
-                    case MBEDTLS_PK_RSASSA_PSS:
+                    case WOLFSSL_PK_RSA:
+                    case WOLFSSL_PK_RSASSA_PSS:
                         xP11KeyType = CKK_RSA;
                         break;
 
-                    case MBEDTLS_PK_ECKEY:
-                    case MBEDTLS_PK_ECKEY_DH:
+                    case WOLFSSL_PK_ECKEY:
+                    case WOLFSSL_PK_ECKEY_DH:
                         xP11KeyType = CKK_EC;
                         break;
 
-                    case MBEDTLS_PK_ECDSA:
+                    case WOLFSSL_PK_ECDSA:
                         xP11KeyType = CKK_ECDSA;
                         break;
 
@@ -847,18 +1109,16 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                 break;
 
             case CKA_VALUE:
-
+            {
                 /*
                  * Assume that the query is for the encoded client certificate.
                  */
-            #if 0
-                pvAttr = ( CK_VOID_PTR ) pxSession->pxCurrentKey->xWolfX509Cli.raw.p; /*lint !e9005 !e9087 Allow casting other types to void*. */
-                ulAttrLength = pxSession->pxCurrentKey->xWolfX509Cli.raw.len;
-            #else
-                xResult = CKR_ATTRIBUTE_VALUE_INVALID;
-            #endif
+                int derLen = 0;
+                pvAttr = ( CK_VOID_PTR )wolfSSL_X509_get_der(
+                    pxSession->pxCurrentKey->xWolfX509Cli, &derLen);
+                ulAttrLength = derLen;
                 break;
-
+            }
             case CKA_MODULUS_BITS:
             case CKA_PRIME_BITS:
 
@@ -866,23 +1126,10 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                  * Key strength size query, handled the same for RSA or ECDSA
                  * in this port.
                  */
-                xKeyBitLen = mbedtls_pk_get_bitlen(
+                xKeyBitLen = wolfSSL_pk_get_bitlen(
                     &pxSession->pxCurrentKey->xWolfPkCtx );
                 ulAttrLength = sizeof( xKeyBitLen );
                 pvAttr = &xKeyBitLen;
-                break;
-
-            case CKA_VENDOR_DEFINED:
-
-                /*
-                 * Return the key context for application-layer use.
-                 */
-            #if 0
-                ulAttrLength = sizeof( pxSession->pxCurrentKey->xWolfPkCtx );
-                pvAttr = &pxSession->pxCurrentKey->xWolfPkCtx;
-            #else
-                xResult = CKR_ATTRIBUTE_VALUE_INVALID;
-            #endif
                 break;
 
             default:
@@ -1099,31 +1346,20 @@ CK_DEFINE_FUNCTION( CK_RV, C_Sign )( CK_SESSION_HANDLE xSession,
         /*
          * Sign the data.
          */
-#if 0
         if( CKR_OK == xResult )
         {
-            if( 0 != pxSessionObj->pxCurrentKey->pfnSavedWolfSign(
-                    pxSessionObj->pxCurrentKey->pvSavedWolfPkCtx,
-                    MBEDTLS_MD_SHA256,
+            if ( 0 != wolfSSL_pk_sign(
+                    &pxSessionObj->pxCurrentKey->xWolfPkCtx,
+                    WC_HASH_TYPE_SHA256, WC_MGF1SHA256,
                     pucData,
                     ulDataLen,
                     pucSignature,
                     ( size_t * ) pulSignatureLen,
-                    mbedtls_ctr_drbg_random,
                     &pxSessionObj->xWolfDrbgCtx ) )
             {
                 xResult = CKR_FUNCTION_FAILED;
             }
         }
-#else
-        (void)pxSessionObj;
-        (void)pucData;
-        (void)ulDataLen;
-        (void)pucSignature;
-        (void)pulSignatureLen;
-
-        xResult = CKR_FUNCTION_FAILED;
-#endif
     }
 
     return xResult;
@@ -1156,26 +1392,17 @@ CK_DEFINE_FUNCTION( CK_RV, C_Verify )( CK_SESSION_HANDLE xSession,
     CK_RV xResult = CKR_OK;
     P11SessionPtr_t pxSessionObj = prvSessionPointerFromHandle( xSession );
 
-#if 0
     /* Verify the signature. */
-    if( 0 != pxSessionObj->pxCurrentKey->xWolfPkInfo.verify_func(
-        pxSessionObj->pxCurrentKey->pvSavedWolfPkCtx,
-        MBEDTLS_MD_SHA256,
-        pucData,
-        ulDataLen,
-        pucSignature,
-        ulSignatureLen ) )
+    if ( 0 != wolfSSL_pk_verify(
+                    &pxSessionObj->pxCurrentKey->xWolfPkCtx,
+                    WC_HASH_TYPE_SHA256, WC_MGF1SHA256,
+                    pucData,
+                    ulDataLen,
+                    pucSignature,
+                    ( size_t ) ulSignatureLen ) )
     {
         xResult = CKR_SIGNATURE_INVALID;
     }
-#else
-    (void)pxSessionObj;
-        (void)pucData;
-        (void)ulDataLen;
-        (void)pucSignature;
-        (void)ulSignatureLen;
-    xResult = CKR_SIGNATURE_INVALID;
-#endif
 
     /* Return the signature verification result. */
     return xResult;
@@ -1190,7 +1417,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_GenerateRandom )( CK_SESSION_HANDLE xSession,
 {   /*lint !e9072 It's OK to have different parameter name. */
     P11SessionPtr_t pxSessionObj = prvSessionPointerFromHandle( xSession );
 
-    if( 0 != mbedtls_ctr_drbg_random( &pxSessionObj->xWolfDrbgCtx, pucRandomData, ulRandomLen ) )
+    if( 0 != wc_RNG_GenerateBlock( &pxSessionObj->xWolfDrbgCtx, pucRandomData, ulRandomLen ) )
     {
         return CKR_FUNCTION_FAILED;
     }

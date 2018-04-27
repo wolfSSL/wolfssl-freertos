@@ -35,8 +35,17 @@
 
 #ifdef WOLF_AWSTLS
 
-/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
-#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+/* wolfSSL library (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/wolfcrypt/sha256.h>
+#include <wolfssl/wolfcrypt/sha.h>
+#include <wolfssl/wolfcrypt/asn_public.h>
+#include <wolfssl/wolfcrypt/coding.h>
+#include <wolfssl/wolfcrypt/random.h>
+#include <wolfssl/wolfcrypt/ecc.h>
+#include <wolfssl/wolfcrypt/rsa.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
 
 /* C runtime includes. */
 #include <string.h>
@@ -74,7 +83,6 @@ typedef struct TLSContext
     /* wolfSSL */
     WOLFSSL_CTX* ctx;
     WOLFSSL* ssl;
-    WOLFSSL_CERT_MANAGER* cm;
 
     /* PKCS#11. */
     CK_FUNCTION_LIST_PTR pxP11FunctionList;
@@ -210,16 +218,6 @@ static int prvInitializeClientCredential( TLSContext_t * pCtx )
         xResult = ( BaseType_t ) pCtx->pxP11FunctionList->C_FindObjectsFinal( pCtx->xP11Session );
     }
 
-    /* Get the internal key context. */
-    if( 0 == xResult )
-    {
-        xTemplate.type = CKA_VENDOR_DEFINED;
-        xTemplate.ulValueLen = sizeof( pCtx->cm );
-        xTemplate.pValue = &pCtx->cm;
-        xResult = ( BaseType_t ) pCtx->pxP11FunctionList->C_GetAttributeValue(
-            pCtx->xP11Session, pCtx->xP11PrivateKey, &xTemplate, 1 );
-    }
-
     /* Get the key size. */
     if( 0 == xResult )
     {
@@ -285,7 +283,9 @@ static int prvInitializeClientCredential( TLSContext_t * pCtx )
     {
         xResult = wolfSSL_CTX_load_verify_buffer(pCtx->ctx,
                 (const byte*)pucCertificate, xTemplate.ulValueLen,
-                WOLFSSL_FILETYPE_PEM);
+                WOLFSSL_FILETYPE_ASN1);
+		if (xResult == WOLFSSL_SUCCESS)
+			xResult = 0;
     }
 
     if( NULL != pucCertificate )
@@ -364,13 +364,15 @@ BaseType_t TLS_Connect( void * pvContext )
             tlsVERISIGN_ROOT_CERTIFICATE_LENGTH,
             WOLFSSL_FILETYPE_PEM);
 
-        if( 0 == xResult )
+        if( xResult == WOLFSSL_SUCCESS)
         {
             xResult = wolfSSL_CTX_load_verify_buffer(pCtx->ctx,
                 (const byte*)tlsATS1_ROOT_CERTIFICATE_PEM,
                 tlsATS1_ROOT_CERTIFICATE_LENGTH,
                 WOLFSSL_FILETYPE_PEM);
         }
+		if (xResult == WOLFSSL_SUCCESS)
+			xResult = 0;
     }
 
     if( 0 == xResult )
@@ -396,6 +398,9 @@ BaseType_t TLS_Connect( void * pvContext )
     /* create connection object */
     if( 0 == xResult )
     {
+        wolfSSL_CTX_SetIORecv(pCtx->ctx, prvNetworkRecv);
+        wolfSSL_CTX_SetIOSend(pCtx->ctx, prvNetworkSend);
+
 		pCtx->ssl = wolfSSL_new(pCtx->ctx);
         if (pCtx->ssl == NULL) {
             xResult = pdFREERTOS_ERRNO_ENOMEM;
@@ -430,8 +435,6 @@ BaseType_t TLS_Connect( void * pvContext )
     if( 0 == xResult )
     {
         /* Setup the IO callbacks */
-        wolfSSL_CTX_SetIORecv(pCtx->ctx, prvNetworkRecv);
-        wolfSSL_CTX_SetIOSend(pCtx->ctx, prvNetworkSend);
         wolfSSL_SetIOReadCtx( pCtx->ssl, (void*)pCtx);
         wolfSSL_SetIOWriteCtx(pCtx->ssl, (void*)pCtx);
 
@@ -555,6 +558,8 @@ void TLS_Cleanup( void * pvContext )
             pCtx->pxP11FunctionList->C_CloseSession( pCtx->xP11Session ); /*lint !e534 This function always return CKR_OK. */
             pCtx->pxP11FunctionList->C_Finalize( NULL );                  /*lint !e534 This function always return CKR_OK. */
         }
+
+        wolfSSL_Cleanup();
 
         /* Free memory. */
         vPortFree( pCtx );

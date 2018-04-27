@@ -31,8 +31,17 @@
 
 #ifdef WOLF_AWSTLS
 
-/* wolfSSL compatibility layer (github.com/wolfSSL/wolfssl) */
-#include <wolfssl/wolfcrypt/port/arm/mbedtls.h>
+/* wolfSSL library (github.com/wolfSSL/wolfssl) */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/wolfcrypt/sha256.h>
+#include <wolfssl/wolfcrypt/sha.h>
+#include <wolfssl/wolfcrypt/asn_public.h>
+#include <wolfssl/wolfcrypt/coding.h>
+#include <wolfssl/wolfcrypt/random.h>
+#include <wolfssl/wolfcrypt/ecc.h>
+#include <wolfssl/wolfcrypt/rsa.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
 
 
 /* C runtime includes. */
