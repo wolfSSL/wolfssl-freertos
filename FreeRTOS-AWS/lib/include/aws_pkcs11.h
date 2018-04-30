@@ -53,4 +53,12 @@
 /* Bring in the public header. */
 #include "pkcs11.h"
 
+#ifdef WOLF_AWSTLS
+/* key der, wolf vendor specific */
+typedef struct vedCliKey {
+    unsigned char* der;
+    unsigned int   derLen;
+} vedCliKey;
+#endif
+
 #endif /* ifndef _AWS_PKCS11_H_ */

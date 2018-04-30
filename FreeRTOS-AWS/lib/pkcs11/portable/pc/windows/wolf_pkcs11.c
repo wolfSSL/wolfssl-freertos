@@ -97,6 +97,8 @@ typedef struct wolfSSL_pk_context {
     } key;
     int type;  /* wolfSSL_pk_type_t */
     int keyBits;
+    byte* der;
+    word32 derLen;
 } wolfSSL_pk_context;
 
 
@@ -119,6 +121,26 @@ size_t wolfSSL_pk_get_bitlen( const wolfSSL_pk_context *pk )
     if (pk)
         return pk->keyBits;
     return 0;
+}
+
+void* wolfSSL_pk_get_key( const wolfSSL_pk_context *pk )
+{
+    if (pk)
+        return pk->key.ptr;
+    return NULL;
+}
+
+int wolfSSL_pk_get_key_der( const wolfSSL_pk_context *pk, byte* der, word32* derLen )
+{
+    int ret = -1;
+    if (pk && der && derLen) {
+        if (*derLen >= pk->derLen)
+            return BUFFER_E;
+        memcpy(der, pk->der, pk->derLen);
+        *derLen = pk->derLen;
+        ret = 0;
+    }
+    return ret;
 }
 
 void wolfSSL_pk_key_free( wolfSSL_pk_context *pk )
@@ -222,6 +244,12 @@ int wolfSSL_pk_parse_key( wolfSSL_pk_context *pk,
     }
     else {
         derLen = ret;
+    }
+
+    pk->derLen = derLen;
+    pk->der = (byte*)pvPortMalloc(derLen);
+    if (pk->der) {
+        memcpy(pk->der, der, derLen);
     }
 
     /* try RSA */
@@ -366,8 +394,16 @@ int wolfSSL_pk_verify(wolfSSL_pk_context *pk,
 
 void wolfSSL_pk_free( wolfSSL_pk_context *pk )
 {
+    if (pk == NULL)
+        return;
+
     /* cleanup keys */
     wolfSSL_pk_key_free(pk);
+
+    if (pk->der) {
+        vPortFree(pk->der);
+        pk->der = NULL;
+    }
 }
 
 
@@ -1062,6 +1098,7 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
     CK_ULONG ulAttrLength = 0;
     wolfSSL_pk_type_t xWolfPkType;
     CK_ULONG xP11KeyType, iAttrib, xKeyBitLen;
+    vedCliKey cliKey;
 
     ( void ) ( xObject );
 
@@ -1131,6 +1168,19 @@ CK_DEFINE_FUNCTION( CK_RV, C_GetAttributeValue )( CK_SESSION_HANDLE xSession,
                 ulAttrLength = sizeof( xKeyBitLen );
                 pvAttr = &xKeyBitLen;
                 break;
+
+            case CKA_VENDOR_DEFINED:
+            {
+                /*
+                 * Return the key context for application-layer use.
+                 */
+                memset(&cliKey, 0, sizeof(cliKey));
+				cliKey.der = pxSession->pxCurrentKey->xWolfPkCtx.der;
+				cliKey.derLen = pxSession->pxCurrentKey->xWolfPkCtx.derLen;
+                ulAttrLength = sizeof(cliKey);
+                pvAttr = &cliKey;
+                break;
+            }
 
             default:
                 xResult = CKR_ATTRIBUTE_TYPE_INVALID;

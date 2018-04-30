@@ -169,6 +169,7 @@ static int prvInitializeClientCredential( TLSContext_t * pCtx )
     CK_OBJECT_CLASS xObjClass = 0;
     CK_OBJECT_HANDLE xCertObj = 0;
     CK_BYTE * pucCertificate = NULL;
+    vedCliKey cliKey;
 
     /* Ensure that the PKCS#11 module is initialized. */
     if( 0 == xResult )
@@ -216,6 +217,16 @@ static int prvInitializeClientCredential( TLSContext_t * pCtx )
     if( 0 == xResult )
     {
         xResult = ( BaseType_t ) pCtx->pxP11FunctionList->C_FindObjectsFinal( pCtx->xP11Session );
+    }
+
+    /* Get the internal key context. */
+    if( 0 == xResult )
+    {
+        xTemplate.type = CKA_VENDOR_DEFINED;
+        xTemplate.ulValueLen = sizeof( cliKey );
+        xTemplate.pValue = &cliKey;
+        xResult = ( BaseType_t ) pCtx->pxP11FunctionList->C_GetAttributeValue(
+            pCtx->xP11Session, pCtx->xP11PrivateKey, &xTemplate, 1 );
     }
 
     /* Get the key size. */
@@ -281,11 +292,18 @@ static int prvInitializeClientCredential( TLSContext_t * pCtx )
     /* Decode the client certificate. */
     if( 0 == xResult )
     {
-        xResult = wolfSSL_CTX_load_verify_buffer(pCtx->ctx,
+        xResult = wolfSSL_CTX_use_certificate_buffer(pCtx->ctx,
                 (const byte*)pucCertificate, xTemplate.ulValueLen,
                 WOLFSSL_FILETYPE_ASN1);
 		if (xResult == WOLFSSL_SUCCESS)
 			xResult = 0;
+
+        /* Load certificate private key */
+        xResult = wolfSSL_CTX_use_PrivateKey_buffer(pCtx->ctx,
+                (const byte*)cliKey.der, cliKey.derLen,
+                WOLFSSL_FILETYPE_ASN1);
+        if (xResult == WOLFSSL_SUCCESS)
+            xResult = 0;
     }
 
     if( NULL != pucCertificate )
@@ -449,6 +467,8 @@ BaseType_t TLS_Connect( void * pvContext )
                 break;
             }
         }
+		if (xResult == WOLFSSL_SUCCESS)
+            xResult = 0;
     }
 
     return xResult;
