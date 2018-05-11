@@ -6,5 +6,5 @@ url=https://github.com/wolfSSL/wolfssl.git
 url=https://github.com/wolfSSL/wolfMQTT.git
 [submodule "FreeRTOS-AWS/lib/third_party/wolfssl"]
 	path = FreeRTOS-AWS/lib/third_party/wolfssl
-	url = git@github.com:dgarske/wolfssl.git
+url=https://github.com/dgarske/wolfssl.git
 	branch = mbedtls_compat
