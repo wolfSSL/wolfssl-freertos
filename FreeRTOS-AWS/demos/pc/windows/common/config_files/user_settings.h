@@ -6,6 +6,9 @@
 /* Use the FreeRTOS Heap and TCP API's */
 #define FREERTOS_TCP
 
+/* Realloc for Heap */
+#define XREALLOC pvPortRealloc
+
 /* For Windows Simulator only */
 #define FREERTOS_TCP_WINSIM
 
