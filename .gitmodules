@@ -1,0 +1,6 @@
+[submodule "FreeRTOS-Classic/FreeRTOS-Plus/Source/WolfSSL"]
+	path = FreeRTOS-Classic/FreeRTOS-Plus/Source/WolfSSL
+url=https://github.com/wolfSSL/wolfssl.git
+[submodule "FreeRTOS-Classic/FreeRTOS-Plus/Source/WolfMQTT"]
+	path = FreeRTOS-Classic/FreeRTOS-Plus/Source/WolfMQTT
+url=https://github.com/wolfSSL/wolfMQTT.git
