@@ -1,0 +1,136 @@
+Change Log for Amazon FreeRTOS V1.2.3 03/29/2018
+    - Fixed TI IAR project build failure.
+
+---------------------------------------------------------------------------------------
+
+Change Log for Amazon FreeRTOS V1.2.2 02/27/2018
+
+OTA Agent V0.9.3
+    - Formatting update.
+
+OTA PAL for Curiosity PIC32MZEF V0.9.0
+    - Beta release of the OTA Update support for the Microchip Curiosity PIC32MZEF.
+
+PKCS#11 for Curiosity_PIC32MZEF V1.0.1
+    - Added support for the management of OTA update code signing keys.
+
+Wi-Fi for Curiosity PIC32MZEF V1.0.1
+    - Updated to conditionally compile the entire file.
+
+---------------------------------------------------------------------------------------
+
+Change Log for Amazon FreeRTOS V1.2.1 02/23/2018
+
+    - Added an IAR IDE demo project for the Texas Instruments CC3220SF-LAUNCHXL.
+    - Added Wi-Fi support for the Microchip Curiosity PIC32MZEF.
+
+FreeRTOS+TCP V2.0.2
+    - Improved NULL variable check in buffer management.
+
+MQTT Agent V1.1.1
+    - Minor bug fix checking for a NULL pointer.
+
+OTA Agent V0.9.2
+    - Updated to support NULL OTA file handles.
+
+Amazon FreeRTOS OTA PAL for CC3220SF-LAUNCHXL V0.9.2
+    - Updated to support NULL OTA file handles.
+
+PKCS#11 for CC3220SF-LAUNCHXL V1.0.1
+    - Added a dummy variable to a previosly empty structure to fix IAR compiler errors.
+
+Secure Socket for Windows Simulator V1.1.1
+    - Formatting update.
+
+Secure Sockets for CC3220SF-LAUNCHXL V1.0.2
+    - Updated to print SimpleLink driver specific error codes when debugging.
+    - Added error handling for non-blocking sockets.
+    - Updated socket option to return an error if security options are specified after 
+      a connection.
+
+Wi-Fi for Curiosity PIC32MZEF V1.0.1
+    - Updated such that Wi-Fi disconnection waits until the link is down before 
+      returning.
+
+Wi-Fi for CC3220SF-LAUNCHXL V1.0.1
+    - Fixed error in attempting to overwrite a const memory.
+
+---------------------------------------------------------------------------------------
+
+Change Log for Amazon FreeRTOS V1.2.0 02/06/2018
+
+Greengrass Discovery V1.0.2
+    Updated to send all data until an error is recieved.
+
+MQTT Agent V1.1.0
+    Added support for ALPN. ALPN allows MQTT traffic to be sent to
+    the AWS IoT broker over port 443 instead of 8883.
+
+OTA Agent V0.9.1
+    The agent was fixed to send a FAILED status when a file too large for the platform
+    is recieved. 
+    Some files were renamed.
+
+PKCS#11 for Windows Simulator
+    Added developer mode key provisioning support.
+
+Secure Socket for Curiosity PIC32MZEF V1.0.1
+    Added support for ALPN.
+
+Secure Socket for Windows Simulator V1.1.0
+    Added support for ALPN.
+
+Secure Sockets for CC3220SF-LAUNCHXL V1.0.1
+    Removed unnecessary server certificate storage on the client side.
+    Removed unnecessary global synchronization semaphore. 
+    Updated for other small bugs.
+
+Shadow V1.0.2
+    Fixed error handling bugs.
+    Require client tokens.
+    Updated for other small bugs.
+
+TLS V1.1.0
+    Added support for ALPN.
+
+---------------------------------------------------------------------------------------
+
+Change Log for Amazon FreeRTOS V1.1.0 12/20/2017
+
+Crypto V1.0.1
+    Fixed compiler warning for the Microchip Curiosity PIC32MZEF.
+
+FreeRTOS+TCP V2.0.1
+    Added support for the Microchip Curiosity PIC32MZEF.
+
+FreeRTOS Kernel V10.0.1
+    Minor bug fixes to allow Linux and C++ builds.
+
+Greengrass Discovery V1.0.1
+    Reformatted console display messages in order to better facilitate 
+    demos and debugging.
+
+MQTT Agent V1.0.1
+    The MQTT Agent now processes commands between successive socket reads to
+    enable faster command handling, especially when the connected socket is
+    receiving data continuously.
+
+OTA Agent V0.9.0
+    Beta release of OTA Update library for Amazon FreeRTOS. Includes support
+    for the Texas Instruments CC3220SF-LAUNCHXL and Windows Simulator.
+
+PKCS#11 for Curiosity PIC32MZEF V1.0.0 Beta 1
+    Added support for the Microchip Curiosity PIC32MZEF.
+
+Secure Socket for Curiosity PIC32MZEF V1.0.0
+    Added support for the Microchip Curiosity PIC32MZEF.
+
+Secure Sockets for LPC54018 IoT Module V1.0.0 Beta 2
+    Fixed bugs in the Secure Sockets implementation for the NXP LPC54018 IoT
+    Module.
+
+Shadow V1.0.1
+    Fixed compiler warning for the Microchip Curiosity PIC32MZEF.
+
+Wi-Fi for LPC54018 IoT Module V1.0.1
+    Changed the Wi-Fi Connection timeout to 10 seconds.

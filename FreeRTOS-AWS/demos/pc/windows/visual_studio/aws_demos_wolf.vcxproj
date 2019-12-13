@@ -1,0 +1,306 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DF666F11-4766-4652-B88D-C6769A70E073}</ProjectGuid>
+    <ProjectName>aws_demos_wolf</ProjectName>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Debug/WIN32.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\common\win_pcap;..\common\config_files;..\common\application_code\include;..\..\..\..\demos\common\include;..\..\..\..\lib\include;..\..\..\..\lib\include\private;..\..\..\..\lib\FreeRTOS\include;..\..\..\..\lib\FreeRTOS\portable\MSVC-MingW;..\..\..\..\lib\FreeRTOS-Plus-TCP\include;..\..\..\..\lib\FreeRTOS-Plus-TCP\Source\portable\BufferManagement;..\..\..\..\lib\FreeRTOS-Plus-TCP\Source\portable\Compiler\MSVC;..\..\..\..\lib\ota\portable\pc\windows;..\..\..\..\lib\third_party\wolfssl;..\..\..\..\lib\third_party\tracealyzer_recorder\Include;..\..\..\..\lib\third_party\jsmn;..\..\..\..\lib\third_party\pkcs11;..\..\..\..\lib\third_party\tinycbor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_WIN32_WINNT=0x0500;WINVER=0x400;_CRT_SECURE_NO_WARNINGS;__PRETTY_FUNCTION__=__FUNCTION__;WOLFSSL_USER_SETTINGS;WOLF_AWSTLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\Debug/WIN32.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalOptions>/wd4210 /wd4127 /wd4214 /wd4201 /wd4244  /wd4310 %(AdditionalOptions)</AdditionalOptions>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ExceptionHandling>false</ExceptionHandling>
+      <CompileAs>CompileAsC</CompileAs>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4206;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c09</Culture>
+    </ResourceCompile>
+    <Link>
+      <OutputFile>.\Debug/aws_demos_wolf.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/WIN32.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>wpcap.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\common\win_pcap</AdditionalLibraryDirectories>
+      <Profile>false</Profile>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/WIN32.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\lib\bufferpool\aws_bufferpool_static_thread_safe.c" />
+    <ClCompile Include="..\..\..\..\lib\crypto\wolf_crypto.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_ARP.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_DHCP.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_DNS.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_IP.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_Sockets.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_Stream_Buffer.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_TCP_IP.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_TCP_WIN.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\FreeRTOS_UDP_IP.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\portable\BufferManagement\BufferAllocation_2.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\source\portable\NetworkInterface\WinPCap\NetworkInterface.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\event_groups.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\list.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\portable\MemMang\heap_4.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\portable\MSVC-MingW\port.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\queue.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\stream_buffer.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\tasks.c" />
+    <ClCompile Include="..\..\..\..\lib\FreeRTOS\timers.c" />
+    <ClCompile Include="..\..\..\..\lib\greengrass\aws_greengrass_discovery.c" />
+    <ClCompile Include="..\..\..\..\lib\greengrass\aws_helper_secure_connect.c" />
+    <ClCompile Include="..\..\..\..\lib\mqtt\aws_mqtt_agent.c" />
+    <ClCompile Include="..\..\..\..\lib\mqtt\aws_mqtt_lib.c" />
+    <ClCompile Include="..\..\..\..\lib\ota\aws_ota_cbor.c" />
+    <ClCompile Include="..\..\..\..\lib\ota\portable\pc\windows\aws_ota_pal.c" />
+    <ClCompile Include="..\..\..\..\lib\ota\aws_rsprintf.c" />
+    <ClCompile Include="..\..\..\..\lib\ota\aws_ota_agent.c">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\pkcs11\portable\pc\windows\pkcs11.c" />
+    <ClCompile Include="..\..\..\..\lib\pkcs11\portable\pc\windows\wolf_pkcs11.c" />
+    <ClCompile Include="..\..\..\..\lib\secure_sockets\portable\pc\windows\aws_secure_sockets.c" />
+    <ClCompile Include="..\..\..\..\lib\shadow\aws_shadow.c" />
+    <ClCompile Include="..\..\..\..\lib\shadow\aws_shadow_json.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\jsmn\jsmn.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\aes.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\arc4.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\asm.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\asn.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\blake2b.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\camellia.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\chacha.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\chacha20_poly1305.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\cmac.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\coding.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\compress.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\curve25519.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\des3.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\dh.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\dsa.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\ecc.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\ecc_fp.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\ed25519.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\error.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\fe_low_mem.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\fe_operations.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\ge_low_mem.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\ge_operations.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\hash.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\hc128.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\hmac.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\integer.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\logging.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\md2.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\md4.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\md5.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\memory.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\misc.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\pkcs12.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\pkcs7.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\poly1305.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\pwdbased.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\rabbit.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\random.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\ripemd.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\rsa.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\sha.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\sha256.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\sha3.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\sha512.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\signature.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\srp.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\tfm.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wc_encrypt.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wc_port.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wolfevent.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\wolfcrypt\src\wolfmath.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\crl.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\internal.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\keys.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\ocsp.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\sniffer.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\ssl.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\tls.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\tls13.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\wolfssl\src\wolfio.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tinycbor\cborencoder.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tinycbor\cborencoder_close_container_checked.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tinycbor\cborerrorstrings.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tinycbor\cborparser.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tinycbor\cborparser_dup_string.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tinycbor\cborpretty.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tracealyzer_recorder\trcKernelPort.c" />
+    <ClCompile Include="..\..\..\..\lib\third_party\tracealyzer_recorder\trcSnapshotRecorder.c" />
+    <ClCompile Include="..\..\..\..\lib\tls\wolf_tls.c" />
+    <ClCompile Include="..\..\..\..\lib\utils\aws_system_init.c" />
+    <ClCompile Include="..\..\..\common\demo_runner\aws_demo_runner.c" />
+    <ClCompile Include="..\..\..\common\devmode_key_provisioning\aws_dev_mode_key_provisioning.c" />
+    <ClCompile Include="..\..\..\common\greengrass_connectivity\aws_greengrass_discovery_demo.c" />
+    <ClCompile Include="..\..\..\common\mqtt\aws_hello_world.c" />
+    <ClCompile Include="..\..\..\common\mqtt\aws_subscribe_publish_loop.c" />
+    <ClCompile Include="..\..\..\common\ota\aws_ota_update_demo.c" />
+    <ClCompile Include="..\..\..\common\shadow\aws_shadow_lightbulb_on_off.c" />
+    <ClCompile Include="..\..\..\common\tcp\aws_simple_tcp_echo_server.c" />
+    <ClCompile Include="..\..\..\common\tcp\aws_tcp_echo_client_separate_tasks.c" />
+    <ClCompile Include="..\..\..\common\tcp\aws_tcp_echo_client_single_task.c" />
+    <ClCompile Include="..\common\application_code\aws_demo_logging.c" />
+    <ClCompile Include="..\common\application_code\aws_entropy_hardware_poll.c" />
+    <ClCompile Include="..\common\application_code\aws_run-time-stats-utils.c" />
+    <ClCompile Include="..\common\application_code\main.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOSIPConfigDefaults.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_ARP.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_DHCP.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_DNS.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_errno_TCP.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_IP.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_Sockets.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_Stream_Buffer.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_TCP_IP.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_TCP_WIN.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\FreeRTOS_UDP_IP.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\IPTraceMacroDefaults.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\NetworkBufferManagement.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS-Plus-TCP\include\NetworkInterface.h" />
+    <ClInclude Include="..\..\..\..\lib\FreeRTOS\portable\MSVC-MingW\portmacro.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_crypto.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_greengrass_discovery.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_mqtt_agent.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_mqtt_lib.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_pkcs11.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_secure_sockets.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_shadow.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_system_init.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_tls.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_ota_agent.h" />
+    <ClInclude Include="..\..\..\..\lib\include\aws_wifi.h" />
+    <ClInclude Include="..\..\..\..\lib\include\event_groups.h" />
+    <ClInclude Include="..\..\..\..\lib\include\FreeRTOS.h" />
+    <ClInclude Include="..\..\..\..\lib\include\message_buffer.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_bufferpool.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_default_root_certificates.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_doubly_linked_list.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_ggd_config_defaults.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_greengrass_lib_private.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_helper_secure_connect.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_lib_init.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_mqtt_agent_config_defaults.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_mqtt_buffer.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_mqtt_config_defaults.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_mqtt_lib_private.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_ota_cbor.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_rsprintf.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_secure_sockets_config_defaults.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_shadow_config_defaults.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_shadow_json.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_ota_pal.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\aws_ota_types.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\deprecated_definitions.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\list.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\mpu_wrappers.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\portable.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\projdefs.h" />
+    <ClInclude Include="..\..\..\..\lib\include\private\stack_macros.h" />
+    <ClInclude Include="..\..\..\..\lib\include\queue.h" />
+    <ClInclude Include="..\..\..\..\lib\include\semphr.h" />
+    <ClInclude Include="..\..\..\..\lib\include\stream_buffer.h" />
+    <ClInclude Include="..\..\..\..\lib\include\task.h" />
+    <ClInclude Include="..\..\..\..\lib\include\timers.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\jsmn\jsmn.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\tinycbor\assert_p.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\tinycbor\cbor.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\tinycbor\cborconstants_p.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\tinycbor\compilersupport_p.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\tinycbor\extract_number_p.h" />
+    <ClInclude Include="..\..\..\..\lib\third_party\tinycbor\math_support_p.h" />
+    <ClInclude Include="..\..\..\common\include\aws_clientcredential.h" />
+    <ClInclude Include="..\..\..\common\include\aws_clientcredential_keys.h" />
+    <ClInclude Include="..\..\..\common\include\aws_demo.h" />
+    <ClInclude Include="..\..\..\common\include\aws_demo_runner.h" />
+    <ClInclude Include="..\..\..\common\include\aws_greengrass_discovery_demo.h" />
+    <ClInclude Include="..\..\..\common\include\aws_hello_world.h" />
+    <ClInclude Include="..\..\..\common\include\aws_logging_task.h" />
+    <ClInclude Include="..\..\..\common\include\aws_ota_update_demo.h" />
+    <ClInclude Include="..\..\..\common\include\aws_shadow_lightbulb_on_off.h" />
+    <ClInclude Include="..\..\..\common\include\aws_simple_tcp_echo_server.h" />
+    <ClInclude Include="..\..\..\common\include\aws_subscribe_publish_loop.h" />
+    <ClInclude Include="..\..\..\common\include\aws_tcp_echo_client_single_tasks.h" />
+    <ClInclude Include="..\common\application_code\aws_demo_logging.h" />
+    <ClInclude Include="..\common\application_code\stdbool.h" />
+    <ClInclude Include="..\common\application_code\unistd.h" />
+    <ClInclude Include="..\common\config_files\aws_bufferpool_config.h" />
+    <ClInclude Include="..\common\config_files\aws_demo_config.h" />
+    <ClInclude Include="..\common\config_files\aws_ggd_config.h" />
+    <ClInclude Include="..\common\config_files\aws_mqtt_agent_config.h" />
+    <ClInclude Include="..\common\config_files\aws_mqtt_config.h" />
+    <ClInclude Include="..\common\config_files\aws_secure_sockets_config.h" />
+    <ClInclude Include="..\common\config_files\aws_shadow_config.h" />
+    <ClInclude Include="..\common\config_files\FreeRTOSConfig.h" />
+    <ClInclude Include="..\common\config_files\FreeRTOSIPConfig.h" />
+    <ClInclude Include="..\common\config_files\trcConfig.h" />
+    <ClInclude Include="..\common\config_files\trcSnapshotConfig.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
