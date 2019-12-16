@@ -317,6 +317,33 @@ BlockLink_t *pxLink;
 }
 /*-----------------------------------------------------------*/
 
+void *pvPortRealloc( void *pv, size_t xWantedSize )
+{
+void *pvReturn = NULL;
+
+    if(pv)
+    {
+        BlockLink_t *pxLink = (BlockLink_t *)((char*)pv - uxHeapStructSize);
+        if(pxLink->xBlockSize & xBlockAllocatedBit)
+        {
+            uint32_t blockSize = (pxLink->xBlockSize & ~xBlockAllocatedBit);
+            blockSize -= (uxHeapStructSize + HEAP_CHECK_SIZE);
+            pvReturn = pvPortMalloc(xWantedSize);
+            if(pvReturn)
+            {
+                memcpy(pvReturn, pv, blockSize);
+                vPortFree(pv);
+            }
+        }
+    }
+    else {
+        pvReturn = pvPortMalloc(xWantedSize);
+    }
+
+    return pvReturn;
+}
+/*-----------------------------------------------------------*/
+
 size_t xPortGetFreeHeapSize( void )
 {
 	return xFreeBytesRemaining;
