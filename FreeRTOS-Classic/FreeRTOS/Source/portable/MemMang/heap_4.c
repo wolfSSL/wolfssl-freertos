@@ -318,7 +318,7 @@ void *pvReturn = NULL;
         if(pxLink->xBlockSize & xBlockAllocatedBit)
         {
             uint32_t blockSize = (pxLink->xBlockSize & ~xBlockAllocatedBit);
-            blockSize -= (xHeapStructSize + HEAP_CHECK_SIZE);
+            blockSize -= xHeapStructSize;
             pvReturn = pvPortMalloc(xWantedSize);
             if(pvReturn)
             {
