@@ -319,21 +319,20 @@ BlockLink_t *pxLink;
 
 void *pvPortRealloc( void *pv, size_t xWantedSize )
 {
-void *pvReturn = NULL;
+    void *pvReturn = NULL;
 
-    if(pv)
+    if (xWantedSize == 0)
     {
-        BlockLink_t *pxLink = (BlockLink_t *)((char*)pv - uxHeapStructSize);
-        if(pxLink->xBlockSize & xBlockAllocatedBit)
+        if (pv)
+            vPortFree(pv);
+    }
+    else if (pv)
+    {
+        pvReturn = pvPortMalloc(xWantedSize);
+        if(pvReturn)
         {
-            uint32_t blockSize = (pxLink->xBlockSize & ~xBlockAllocatedBit);
-            blockSize -= uxHeapStructSize;
-            pvReturn = pvPortMalloc(xWantedSize);
-            if(pvReturn)
-            {
-                memcpy(pvReturn, pv, blockSize);
-                vPortFree(pv);
-            }
+            memcpy(pvReturn, pv, xWantedSize);
+            vPortFree(pv);
         }
     }
     else {
